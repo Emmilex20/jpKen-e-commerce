@@ -3058,18 +3058,19 @@ main { /* Assuming your <main> tag wraps the content like in App.jsx */
   align-items: center;
   justify-content: center;
   text-align: center;
-  background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent overlay for text readability */
+   border-radius: 12px;
   padding: 1rem;
 }
 
 .carousel-product-name {
   font-size: clamp(2rem, 5vw, 3rem);
   font-weight: 700; /* Slightly less bold than 800, often looks softer */
-  color: var(--white); /* White text remains */
+  color: rgb(7, 0, 0); /* White text remains */
   /* text-transform: uppercase; */ /* OPTIONAL: Remove or keep based on preference for a softer look */
   letter-spacing: 0.03em; /* Slightly reduce letter spacing for a less rigid look */
   line-height: 1.3; /* Increase line height slightly for more breathing room */
   text-align: center;
+  border-radius: 12px;
 
   /* Softer Text Shadow for less sharp edges and more depth:
      - Use multiple, slightly blurred shadows.
