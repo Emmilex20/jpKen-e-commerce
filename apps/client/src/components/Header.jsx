@@ -1,5 +1,5 @@
 // apps/client/src/components/Header.jsx
-import React, { useState } from 'react'; // Import useState
+import React, { useState } from 'react';
 import { Navbar, Nav, Container, NavDropdown, Badge } from 'react-bootstrap';
 import { FaShoppingCart, FaUser, FaBox } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
@@ -8,8 +8,9 @@ import { toast } from 'react-toastify';
 
 import SearchBox from './SearchBox';
 
-import { useLogoutMutation } from '../slices/authApiSlice';
-import { logout } from '../slices/authSlice';
+import { useLogoutMutation } from '../slices/authApiSlice'; // Assuming this is correct API slice
+import { logout } from '../slices/authSlice'; // Import the logout action from authSlice
+import { resetCart } from '../slices/cartSlice'; // Assuming you have a resetCart action in cartSlice
 
 const Header = () => {
   const { cartItems } = useSelector((state) => state.cart);
@@ -26,7 +27,8 @@ const Header = () => {
   const logoutHandler = async () => {
     try {
       await logoutApiCall().unwrap();
-      dispatch(logout());
+      dispatch(logout()); // Dispatch the logout action from authSlice (clears localStorage)
+      dispatch(resetCart()); // Reset cart state (if you have this action)
       navigate('/login');
       toast.success('Logged out successfully!');
       setExpanded(false); // Close the menu after logout
@@ -49,16 +51,16 @@ const Header = () => {
         expand="lg"
         fixed="top"
         className="py-3 custom-header-bg"
-        expanded={expanded} // Control expanded state
-        onToggle={() => setExpanded(!expanded)} // Toggle on click of Navbar.Toggle
+        expanded={expanded}
+        onToggle={() => setExpanded(!expanded)}
       >
         <Container>
           <Navbar.Brand as={Link} to="/" className="d-flex align-items-center header-brand" onClick={handleNavLinkClick}>
             <img
-              src="/logo.png" // Path to your logo in the public folder
-              alt="JP Ken Logo" // Always provide a descriptive alt text for accessibility
-              height="30" // Adjust height as needed
-              className="d-inline-block align-top me-2" // Bootstrap utility classes for alignment and margin
+              src="/logo.png"
+              alt="JP Ken Logo"
+              height="30"
+              className="d-inline-block align-top me-2"
             />
             <strong className="fs-4 logo-text">JP Ken</strong>
           </Navbar.Brand>
@@ -70,7 +72,6 @@ const Header = () => {
             </Nav>
 
             <Nav className="ms-auto main-nav-links">
-              {/* New "Shop" or "Products" Link */}
               <Nav.Link as={Link} to="/products" className="d-flex align-items-center nav-item-link" onClick={handleNavLinkClick}>
                 <FaBox className="me-1 nav-icon" /> Shop All
               </Nav.Link>
@@ -97,6 +98,7 @@ const Header = () => {
                 </Nav.Link>
               )}
 
+              {/* Admin Links */}
               {userInfo && userInfo.isAdmin && (
                 <NavDropdown title="Admin" id="adminmenu" className="nav-item-link" onSelect={handleNavLinkClick}>
                   <NavDropdown.Item as={Link} to="/admin/userlist" onClick={handleNavLinkClick}>Users</NavDropdown.Item>

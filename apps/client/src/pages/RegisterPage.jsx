@@ -1,25 +1,38 @@
 // apps/client/src/pages/RegisterPage.jsx
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // Added useLocation
 import { Form, Button, Row, Col } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux'; // Added useSelector
 
 import FormContainer from '../components/FormContainer';
 import Loader from '../components/Loader';
-import { useRegisterMutation } from '../slices/authApiSlice';
+import { useRegisterMutation } from '../slices/authApiSlice'; // Assuming this is correct API slice
 import { setCredentials } from '../slices/authSlice';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation(); // For redirect logic
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const password = watch('password');
 
   const [registerUser, { isLoading }] = useRegisterMutation();
+
+  const { userInfo } = useSelector((state) => state.auth); // To check if already logged in
+
+  const redirect = new URLSearchParams(location.search).get('redirect') || '/'; // Get redirect from URL or default to /
+
+  // If user is already logged in, redirect them
+  React.useEffect(() => {
+    if (userInfo) {
+      navigate(redirect);
+    }
+  }, [userInfo, navigate, redirect]);
+
 
   const submitHandler = async (data) => {
     const { name, email, password, confirmPassword } = data;
@@ -31,9 +44,9 @@ const RegisterPage = () => {
 
     try {
       const res = await registerUser({ name, email, password }).unwrap();
-      dispatch(setCredentials({ ...res }));
+      dispatch(setCredentials({ ...res })); // This dispatches user data and token to Redux and localStorage
       toast.success('Registration successful!');
-      navigate('/');
+      navigate(redirect); // Use the redirect path
     } catch (err) {
       toast.error(err?.data?.message || err.error);
       console.error('Registration error:', err);
@@ -45,10 +58,9 @@ const RegisterPage = () => {
       <Helmet>
         <title>ProShop - Register</title>
       </Helmet>
-      {/* Added custom class for the heading */}
       <h1 className="form-heading">Register</h1>
 
-      <Form onSubmit={handleSubmit(submitHandler)} className="auth-form"> {/* Added custom class */}
+      <Form onSubmit={handleSubmit(submitHandler)} className="auth-form">
         <Form.Group className="mb-4" controlId="name">
           <Form.Label className="form-label-custom">Name</Form.Label>
           <Form.Control
@@ -118,7 +130,7 @@ const RegisterPage = () => {
         <Button
           type="submit"
           variant="primary"
-          className="form-submit-btn" // Added custom class
+          className="form-submit-btn"
           disabled={isLoading}
         >
           Register
@@ -127,7 +139,7 @@ const RegisterPage = () => {
         {isLoading && <Loader />}
       </Form>
 
-      <Row className="py-3 form-links-row"> {/* Added custom class */}
+      <Row className="py-3 form-links-row">
         <Col className="text-center">
           Have an account?{' '}
           <Link to="/login" className="form-link">
