@@ -1,3 +1,4 @@
+// apps/backend/src/server.js
 import path from 'path';
 import express from 'express';
 import dotenv from 'dotenv';
@@ -29,6 +30,18 @@ const io = new Server(server, {
   }
 });
 
+// Custom middleware to capture the raw request body for webhooks and other POST requests
+// This must be defined and applied before other body parsers.
+const rawBodySaver = (req, res, buf, encoding) => {
+  if (buf && buf.length) {
+    req.rawBody = buf.toString(encoding || 'utf8');
+    console.log('rawBodySaver: Raw body captured globally. Length:', buf.length); // Debug log
+  } else {
+    console.log('rawBodySaver: Raw body is empty or undefined (globally).'); // Debug log
+  }
+};
+
+
 // --- CRITICAL CHANGE FOR CORS ---
 // This middleware must be placed before your routes and body parsers for proper functioning.
 // Use an array for 'origin' if you need to support both Vercel and localhost during dev.
@@ -40,14 +53,15 @@ app.use(cors({
   credentials: true, // ALLOW COOKIES TO BE SENT CROSS-ORIGIN
 }));
 
-// Body parser middleware - IMPORTANT: For webhooks, the specific route's express.json()
-// needs the `verify` option, not necessarily this global one unless you want rawBody globally.
-// We will handle rawBody specifically in orderRoutes.js for the webhook.
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Cookie parser middleware
 app.use(cookieParser());
+
+// Body parser middleware - IMPORTANT: Apply express.json with the verify function GLOBALLY
+// This ensures rawBody is available for all JSON requests, including webhooks.
+// This must come *before* any other route handlers that might consume the body.
+app.use(express.json({ verify: rawBodySaver })); // <--- CRITICAL CHANGE HERE
+app.use(express.urlencoded({ extended: true }));
+
 
 // Application routes
 app.use('/api/products', productRoutes);

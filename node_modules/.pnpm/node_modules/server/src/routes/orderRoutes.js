@@ -1,6 +1,6 @@
 // apps/backend/routes/orderRoutes.js
 import express from 'express';
-const router = express.Router();
+const router = express(); // Use express.Router() here, not express()
 import {
   addOrderItems,
   getOrderById,
@@ -39,28 +39,26 @@ router.route('/:id/cancel').put(protect, cancelOrder); // NEW ROUTE
 
 // --- PAYSTACK SPECIFIC ROUTES ---
 
-// Custom middleware to capture the raw request body for webhooks
-// This must be defined before it's used in the webhook route.
-const rawBodySaver = (req, res, buf, encoding) => {
-  console.log('--- rawBodySaver middleware hit ---'); // Debug log
-  if (buf && buf.length) {
-    req.rawBody = buf.toString(encoding || 'utf8');
-    console.log('rawBodySaver: buf length:', buf.length); // Debug log
-  } else {
-    console.log('rawBodySaver: buf is empty or undefined'); // Debug log
-  }
-};
+// REMOVED: Custom middleware to capture the raw request body for webhooks
+// const rawBodySaver = (req, res, buf, encoding) => {
+//   console.log('--- rawBodySaver middleware hit ---'); // Debug log
+//   if (buf && buf.length) {
+//     req.rawBody = buf.toString(encoding || 'utf8');
+//     console.log('rawBodySaver: buf length:', buf.length); // Debug log
+//   } else {
+//     console.log('rawBodySaver: buf is empty or undefined'); // Debug log
+//   }
+// };
 
 // Route to initialize Paystack payment for an order
 router.route('/:id/paystack/initialize').post(protect, initializePaystackPayment);
 
 // Route for Paystack webhooks (public, Paystack server will call this)
 // This should be outside of the '/:id' route structure, as it's a general webhook listener
-// Ensure express.json() is used here WITH THE VERIFY OPTION
+// The `express.json({ verify: rawBodySaver })` is now handled globally in server.js
 router.post(
   '/paystack/webhook',
-  express.json({ verify: rawBodySaver }), // <--- This is the crucial part
-  handlePaystackWebhook
+  handlePaystackWebhook // <--- ONLY THE HANDLER HERE
 );
 // --- END PAYSTACK SPECIFIC ROUTES ---
 
