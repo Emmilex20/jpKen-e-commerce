@@ -1,0 +1,9 @@
+# Exclude environment variables
+.env
+
+# Exclude node_modules
+node_modules
+
+# Optionally exclude logs or other generated files specific to backend
+logs/
+*.log
