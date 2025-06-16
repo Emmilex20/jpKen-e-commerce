@@ -15,6 +15,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { Helmet } from 'react-helmet-async';
+import formatCurrency from '../utils/formatCurrency';
 
 import Rating from '../components/Rating';
 import Loader from '../components/Loader';
@@ -106,7 +107,7 @@ const ProductDetailPage = () => {
                   />
                 </ListGroup.Item>
                 <ListGroup.Item className="product-info-item product-price-detail">
-                  Price: <strong>₦{product.price}</strong>
+                  Price: <strong>{formatCurrency(product.price)}</strong>
                 </ListGroup.Item>
                 <ListGroup.Item className="product-info-item product-description">
                   Description: {product.description}
@@ -120,7 +121,7 @@ const ProductDetailPage = () => {
                     <Row>
                       <Col>Price:</Col>
                       <Col>
-                        <strong className="text-success">₦{product.price}</strong> {/* Green for price */}
+                        <strong className="text-success">{formatCurrency(product.price)}</strong> {/* Green for price */}
                       </Col>
                     </Row>
                   </ListGroup.Item>

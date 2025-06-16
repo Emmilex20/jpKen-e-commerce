@@ -10,7 +10,7 @@ import Message from '../components/Message';
 import Loader from '../components/Loader';
 import { useCreateOrderMutation } from '../slices/ordersApiSlice';
 import { clearCartItems } from '../slices/cartSlice';
-import { addDecimals } from '../utils/cartUtils'; // Import utility for formatting prices
+import formatCurrency from '../utils/formatCurrency';
 
 const PlaceOrderPage = () => {
   const navigate = useNavigate();
@@ -100,7 +100,7 @@ const PlaceOrderPage = () => {
                         </Col>
                         <Col xs={12} sm={5} md={5} lg={5} className="d-flex align-items-center justify-content-lg-end justify-content-sm-start mt-2 mt-sm-0"> {/* Adjusted alignment for price */}
                           <span className="order-item-price">
-                            {item.qty} x ₦{item.price} = ₦{addDecimals(item.qty * item.price)}
+                            {item.qty} x {formatCurrency(item.price)} = {formatCurrency(item.qty * item.price)}
                           </span>
                         </Col>
                       </Row>
@@ -120,25 +120,33 @@ const PlaceOrderPage = () => {
               <ListGroup.Item className="summary-detail-item">
                 <Row className="summary-row">
                   <Col>Items</Col>
-                  <Col className="text-end">₦{addDecimals(cart.itemsPrice)}</Col>
+                  <Col className="text-end">
+                    {formatCurrency(cart.itemsPrice)} {/* ⭐ Apply formatCurrency here ⭐ */}
+                  </Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item className="summary-detail-item">
                 <Row className="summary-row">
                   <Col>Shipping</Col>
-                  <Col className="text-end">₦{addDecimals(cart.shippingPrice)}</Col>
+                  <Col className="text-end">
+                    {formatCurrency(cart.shippingPrice)} {/* ⭐ Apply formatCurrency here ⭐ */}
+                  </Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item className="summary-detail-item">
                 <Row className="summary-row">
                   <Col>Tax</Col>
-                  <Col className="text-end">₦{addDecimals(cart.taxPrice)}</Col>
+                  <Col className="text-end">
+                    {formatCurrency(cart.taxPrice)} {/* ⭐ Apply formatCurrency here ⭐ */}
+                  </Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item className="summary-total-item">
                 <Row className="summary-row font-weight-bold">
                   <Col>Total</Col>
-                  <Col className="text-end total-price-value">${addDecimals(cart.totalPrice)}</Col>
+                  <Col className="text-end total-price-value">
+                    {formatCurrency(cart.totalPrice)} {/* ⭐ Apply formatCurrency here ⭐ */}
+                  </Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item className="summary-error-item">

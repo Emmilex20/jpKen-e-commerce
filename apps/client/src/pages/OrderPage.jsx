@@ -22,6 +22,8 @@ import {
     useCancelOrderMutation,
 } from '../slices/ordersApiSlice';
 
+import formatCurrency from '../utils/formatCurrency';
+
 import { usePaystackPayment } from 'react-paystack'; // Correct import for react-paystack hook
 
 const OrderPage = () => {
@@ -410,7 +412,7 @@ const OrderPage = () => {
                                                     </Link>
                                                 </Col>
                                                 <Col md={4} className="order-item-price">
-                                                    {item.qty} &times; ₦{item.price.toFixed(2)} = ₦{ (item.qty * item.price).toFixed(2) }
+                                                    {item.qty} &times; {formatCurrency(item.price)} = {formatCurrency(item.qty * item.price)}
                                                 </Col>
                                             </Row>
                                         </ListGroup.Item>
@@ -430,25 +432,27 @@ const OrderPage = () => {
                             <ListGroup.Item className="order-total-row">
                                 <Row>
                                     <Col>Items</Col>
-                                    <Col className="text-end">₦{displayOrder.itemsPrice.toFixed(2)}</Col>
+                                    <Col className="text-end">
+                                        {formatCurrency(displayOrder.itemsPrice)} {/* ⭐ Apply formatCurrency here ⭐ */}
+                                    </Col>
                                 </Row>
                             </ListGroup.Item>
                             <ListGroup.Item className="order-total-row">
                                 <Row>
                                     <Col>Shipping</Col>
-                                    <Col className="text-end">₦{displayOrder.shippingPrice.toFixed(2)}</Col>
+                                    <Col className="text-end">{formatCurrency(displayOrder.shippingPrice)}</Col>
                                 </Row>
                             </ListGroup.Item>
                             <ListGroup.Item className="order-total-row">
                                 <Row>
                                     <Col>Tax</Col>
-                                    <Col className="text-end">₦{displayOrder.taxPrice.toFixed(2)}</Col>
+                                    <Col className="text-end">{formatCurrency(displayOrder.taxPrice)}</Col>
                                 </Row>
                             </ListGroup.Item>
                             <ListGroup.Item className="order-total-row total-price">
                                 <Row>
                                     <Col><strong>Total</strong></Col>
-                                    <Col className="text-end"><strong>₦{displayOrder.totalPrice.toFixed(2)}</strong></Col>
+                                    <Col className="text-end"><strong>{formatCurrency(displayOrder.totalPrice)}</strong></Col>
                                 </Row>
                             </ListGroup.Item>
 

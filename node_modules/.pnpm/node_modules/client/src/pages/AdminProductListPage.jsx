@@ -10,6 +10,7 @@ import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import { Helmet } from 'react-helmet-async';
 import { Table, Button, Row, Col } from 'react-bootstrap';
 import Paginate from '../components/Paginate'; // Import Paginate for admin
+import formatCurrency from '../utils/formatCurrency';
 
 import {
   useGetProductsQuery,
@@ -127,7 +128,7 @@ const AdminProductListPage = () => { // Renamed component
                   <tr key={product._id} className="table-row-item">
                     <td>{product._id.substring(product._id.length - 6)}</td>
                     <td>{product.name}</td>
-                    <td>₦{product.price.toFixed(2)}</td>
+                    <td>{formatCurrency(product.price.toFixed(2))}</td>
                     <td>{product.category}</td>
                     <td>{product.brand}</td>
                     <td className="table-actions">

@@ -6,6 +6,7 @@ import { FaShoppingCart } from 'react-icons/fa'; // Import shopping cart icon
 import { useDispatch } from 'react-redux'; // For Redux dispatch
 import { addToCart } from '../slices/cartSlice'; // Your addToCart action
 import { toast } from 'react-toastify'; // For notifications
+import formatCurrency from '../utils/formatCurrency';
 
 const Product = ({ product }) => {
   const dispatch = useDispatch();
@@ -35,7 +36,7 @@ const Product = ({ product }) => {
         </Card.Text>
 
         <Card.Text as="h3" className="product-card-price mt-auto mb-3">
-          ₦{product.price}
+          {formatCurrency(product.price)}
         </Card.Text>
 
         {/* Add to Cart Button for product card */}

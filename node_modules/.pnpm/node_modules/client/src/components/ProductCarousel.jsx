@@ -4,6 +4,7 @@ import { Carousel, Image } from 'react-bootstrap';
 import Loader from './Loader';
 import Message from './Message';
 import { useGetTopProductsQuery } from '../slices/productsApiSlice'; // Import the new hook
+import formatCurrency from '../utils/formatCurrency';
 
 const ProductCarousel = () => {
   const { data: products, isLoading, error } = useGetTopProductsQuery();
@@ -27,7 +28,7 @@ const ProductCarousel = () => {
             />
             <Carousel.Caption className="carousel-caption-custom">
               <h2 className="carousel-product-name">
-                {product.name} (₦{product.price})
+                {product.name} ({formatCurrency(product.price)})
               </h2>
             </Carousel.Caption>
           </Link>

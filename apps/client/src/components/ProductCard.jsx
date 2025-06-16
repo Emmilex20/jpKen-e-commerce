@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Rating from './Rating'; // Assuming you have a Rating component
+import formatCurrency from '../utils/formatCurrency';
 
 const ProductCard = ({ product }) => {
   return (
@@ -22,7 +23,7 @@ const ProductCard = ({ product }) => {
         <div className="mb-2">
           <Rating value={product.rating} text={`${product.numReviews} reviews`} />
         </div>
-        <p className="text-xl font-bold text-gray-900">₦{product.price}</p>
+        <p className="text-xl font-bold text-gray-900">{formatCurrency(product.price)}</p>
       </div>
     </div>
   );

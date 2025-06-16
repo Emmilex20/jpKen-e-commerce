@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { FaCheck, FaTimes } from 'react-icons/fa'; // Import icons
+import formatCurrency from '../utils/formatCurrency';
 
 import Loader from '../components/Loader';
 import Message from '../components/Message';
@@ -172,7 +173,7 @@ const ProfilePage = () => {
                     <tr key={order._id} className="table-row-item">
                       <td>{order._id.substring(order._id.length - 6)}</td>
                       <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                      <td>₦{order.totalPrice.toFixed(2)}</td>
+                      <td>{formatCurrency(order.totalPrice)}</td>
                       <td className="text-center">
                         {order.isPaid ? (
                           <FaCheck className="success-icon" />

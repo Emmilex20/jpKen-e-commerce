@@ -6,6 +6,7 @@ import { Table, Button } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 // Import icons for check and times, including the new FaBan for canceled
 import { FaCheckCircle, FaTimesCircle, FaBan } from 'react-icons/fa';
+import formatCurrency from '../utils/formatCurrency';
 
 import {
   useGetOrdersQuery,
@@ -110,7 +111,7 @@ const OrderListPage = () => {
                       <td>{order._id.substring(order._id.length - 6)}</td>
                       <td>{order.user && order.user.name ? order.user.name : 'N/A'}</td>
                       <td>{new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
-                      <td>₦{order.totalPrice.toFixed(2)}</td>
+                      <td>{formatCurrency(order.totalPrice)}</td>
                       <td className="text-center">
                         {order.isPaid ? (
                           // Use the pre-calculated string here

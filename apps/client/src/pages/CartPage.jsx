@@ -14,6 +14,7 @@ import {
 import { FaTrash } from 'react-icons/fa';
 import Message from '../components/Message';
 import { addToCart, removeFromCart } from '../slices/cartSlice';
+import formatCurrency from '../utils/formatCurrency';
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const CartPage = () => {
         <h1 className="cart-heading">Shopping Cart</h1> {/* Added custom heading class */}
         {cartItems.length === 0 ? (
           <Message variant="info" className="empty-cart-message"> {/* Added variant and class */}
-            Your cart is empty. <Link to="/">Go Back</Link>
+            Your cart is empty. <Link to="/products">Go Back</Link>
           </Message>
         ) : (
           <ListGroup variant="flush" className="cart-items-list"> {/* Added custom class */}
@@ -59,7 +60,7 @@ const CartPage = () => {
                   <Col md={3}>
                     <Link to={`/product/${item._id}`} className="cart-item-name">{item.name}</Link> {/* Custom class */}
                   </Col>
-                  <Col md={2} className="cart-item-price">${item.price}</Col> {/* Custom class */}
+                  <Col md={2} className="cart-item-price">{formatCurrency(item.price)}</Col> {/* Custom class */}
                   <Col md={2}>
                     <Form.Control
                       as="select"
@@ -101,9 +102,9 @@ const CartPage = () => {
                 items)
               </h2>
               <strong className="cart-total-price"> {/* Custom class for total price */}
-                ₦{cartItems
-                  .reduce((acc, item) => acc + item.qty * item.price, 0)
-                  .toFixed(2)}
+                {formatCurrency(
+                cartItems.reduce((acc, item) => acc + item.qty * item.price, 0)
+                )}
               </strong>
             </ListGroup.Item>
             <ListGroup.Item>
