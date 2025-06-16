@@ -1,7 +1,12 @@
 // apps/client/src/components/Header.jsx
 import React, { useState } from 'react';
 import { Navbar, Nav, Container, NavDropdown, Badge } from 'react-bootstrap';
-import { FaShoppingCart, FaUser, FaBox } from 'react-icons/fa';
+import {
+  FaShoppingCart,
+  FaUser,
+  FaBox,
+  FaUserShield, // ⭐ NEW: Import FaUserShield for Admin icon ⭐
+} from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -55,7 +60,12 @@ const Header = () => {
         onToggle={() => setExpanded(!expanded)}
       >
         <Container>
-          <Navbar.Brand as={Link} to="/" className="d-flex align-items-center header-brand" onClick={handleNavLinkClick}>
+          <Navbar.Brand
+            as={Link}
+            to="/"
+            className="d-flex align-items-center header-brand"
+            onClick={handleNavLinkClick}
+          >
             <img
               src="/logo.png"
               alt="JP Ken Logo"
@@ -72,11 +82,21 @@ const Header = () => {
             </Nav>
 
             <Nav className="ms-auto main-nav-links">
-              <Nav.Link as={Link} to="/products" className="d-flex align-items-center nav-item-link" onClick={handleNavLinkClick}>
+              <Nav.Link
+                as={Link}
+                to="/products"
+                className="d-flex align-items-center nav-item-link"
+                onClick={handleNavLinkClick}
+              >
                 <FaBox className="me-1 nav-icon" /> Shop All
               </Nav.Link>
 
-              <Nav.Link as={Link} to="/cart" className="d-flex align-items-center nav-item-link" onClick={handleNavLinkClick}>
+              <Nav.Link
+                as={Link}
+                to="/cart"
+                className="d-flex align-items-center nav-item-link"
+                onClick={handleNavLinkClick}
+              >
                 <FaShoppingCart className="me-1 nav-icon" /> Cart
                 {cartItemCount > 0 && (
                   <Badge pill bg="primary" className="ms-1 header-cart-badge">
@@ -92,28 +112,49 @@ const Header = () => {
                       <FaUser className="me-1 nav-icon" /> {userInfo.name}
                     </span>
                   }
-                  id='username'
+                  id="username"
                   className="nav-item-link"
                   onSelect={handleNavLinkClick}
-                  caret={false} 
+                  caret={false}
                 >
-                  <NavDropdown.Item as={Link} to='/profile' onClick={handleNavLinkClick}>Profile</NavDropdown.Item>
-                  <NavDropdown.Item onClick={logoutHandler}>
-                    Logout
+                  <NavDropdown.Item as={Link} to="/profile" onClick={handleNavLinkClick}>
+                    Profile
                   </NavDropdown.Item>
+                  <NavDropdown.Item onClick={logoutHandler}>Logout</NavDropdown.Item>
                 </NavDropdown>
               ) : (
-                <Nav.Link as={Link} to="/login" className="d-flex align-items-center nav-item-link" onClick={handleNavLinkClick}>
+                <Nav.Link
+                  as={Link}
+                  to="/login"
+                  className="d-flex align-items-center nav-item-link"
+                  onClick={handleNavLinkClick}
+                >
                   <FaUser className="me-1 nav-icon" /> Sign In
                 </Nav.Link>
               )}
 
               {/* Admin Links */}
               {userInfo && userInfo.isAdmin && (
-                <NavDropdown title="Admin" id="adminmenu" className="nav-item-link" onSelect={handleNavLinkClick}>
-                  <NavDropdown.Item as={Link} to="/admin/userlist" onClick={handleNavLinkClick}>Users</NavDropdown.Item>
-                  <NavDropdown.Item as={Link} to="/admin/productlist" onClick={handleNavLinkClick}>Products</NavDropdown.Item>
-                  <NavDropdown.Item as={Link} to="/admin/orderlist" onClick={handleNavLinkClick}>Orders</NavDropdown.Item>
+                <NavDropdown
+                  title={
+                    <span className="d-flex align-items-center">
+                      <FaUserShield className="me-1 nav-icon" /> Admin
+                    </span>
+                  }
+                  id="adminmenu"
+                  className="nav-item-link"
+                  onSelect={handleNavLinkClick}
+                  caret={false}
+                >
+                  <NavDropdown.Item as={Link} to="/admin/userlist" onClick={handleNavLinkClick}>
+                    Users
+                  </NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/admin/productlist" onClick={handleNavLinkClick}>
+                    Products
+                  </NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/admin/orderlist" onClick={handleNavLinkClick}>
+                    Orders
+                  </NavDropdown.Item>
                 </NavDropdown>
               )}
             </Nav>
