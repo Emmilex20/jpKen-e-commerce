@@ -13,8 +13,8 @@ import PaymentPage from './pages/PaymentPage';
 import PlaceOrderPage from './pages/PlaceOrderPage';
 import OrderPage from './pages/OrderPage';
 // NEW PAGE IMPORTS FOR PASSWORD RESET
-import ForgotPasswordPage from './pages/ForgotPasswordPage'; // <-- ADD THIS
-import ResetPasswordPage from './pages/ResetPasswordPage';   // <-- ADD THIS
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 // Admin Page Imports (Ensure these files exist in src/pages/ or adjust paths)
 import UserListPage from './pages/UserListPage';
@@ -33,26 +33,29 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ScrollToTop from './components/ScrollToTop';
 
+// IMPORT THE NEW FLOATING CART BUTTON
+import FloatingCartButton from './components/FloatingCartButton'; // <--- ADD THIS IMPORT
+
 function App() {
   return (
-    <> 
-    <ScrollToTop />
+    <>
+      <ScrollToTop />
       <Header />
       <main className="container mx-auto px-4 py-8 min-h-screen">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path='/products' element={<PublicProductListPage />} />
-            <Route path='/products/page/:pageNumber' element={<PublicProductListPage />} />
-            <Route path='products/search/:keyword' element={<PublicProductListPage />} />
-            <Route path='products/search/:keyword/page/:pageNumber' element={<PublicProductListPage />} />
+          <Route path='/products/page/:pageNumber' element={<PublicProductListPage />} />
+          <Route path='products/search/:keyword' element={<PublicProductListPage />} />
+          <Route path='products/search/:keyword/page/:pageNumber' element={<PublicProductListPage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/cart/:id?" element={<CartPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           {/* NEW PUBLIC ROUTES FOR PASSWORD RESET */}
-          <Route path="/forgotpassword" element={<ForgotPasswordPage />} />  {/* <-- ADD THIS */}
-          <Route path="/resetpassword/:token" element={<ResetPasswordPage />} /> {/* <-- ADD THIS */}
+          <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
+          <Route path="/resetpassword/:token" element={<ResetPasswordPage />} />
 
           {/* Protected User Routes */}
           <Route path="" element={<PrivateRoutes />}>
@@ -68,13 +71,15 @@ function App() {
             <Route path="/admin/userlist" element={<UserListPage />} />
             <Route path="/admin/user/:id/edit" element={<UserEditPage />} />
             <Route path='/admin/productlist' element={<AdminProductListPage />} />
-              <Route path='/admin/productlist/:pageNumber' element={<AdminProductListPage />} />
+            <Route path='/admin/productlist/:pageNumber' element={<AdminProductListPage />} />
             <Route path="/admin/product/:id/edit" element={<ProductEditPage />} />
             <Route path="/admin/orderlist" element={<OrderListPage />} />
           </Route>
         </Routes>
       </main>
       <Footer />
+      {/* RENDER THE FLOATING CART BUTTON HERE */}
+      <FloatingCartButton /> {/* <--- ADD THIS LINE */}
       <ToastContainer />
     </>
   );

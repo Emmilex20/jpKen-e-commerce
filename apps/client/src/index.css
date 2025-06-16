@@ -3639,3 +3639,45 @@ main { /* Assuming your <main> tag wraps the content like in App.jsx */
     font-size: 0.9rem;
   }
 }
+
+/* Styling for the floating cart button */
+.floating-cart-button {
+  position: fixed; /* Fixes it to the viewport */
+  bottom: 20px;    /* 20px from the bottom */
+  right: 20px;     /* 20px from the right */
+  background-color: #007bff; /* Primary blue color */
+  color: white; /* White icon color */
+  border-radius: 50%; /* Makes it perfectly circular */
+  width: 60px;     /* Fixed width */
+  height: 60px;    /* Fixed height */
+  display: flex;   /* Use flexbox for centering content */
+  align-items: center; /* Center icon vertically */
+  justify-content: center; /* Center icon horizontally */
+  cursor: pointer; /* Indicates it's clickable */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+  transition: all 0.3s ease; /* Smooth transition for hover effects */
+  z-index: 1000; /* Ensure it stays on top of other content */
+}
+
+/* Hover effect */
+.floating-cart-button:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+  transform: translateY(-3px); /* Slight lift effect */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+}
+
+/* Styling for the badge (item count) */
+.cart-badge {
+  position: absolute; /* Position relative to the button */
+  top: -5px;      /* Slightly above the button */
+  right: -5px;    /* Slightly to the right of the button */
+  background-color: #dc3545; /* Red color for the badge */
+  color: white; /* White text color */
+  border-radius: 50%; /* Circular badge */
+  padding: 4px 8px; /* Padding inside the badge */
+  font-size: 0.75em; /* Smaller font size */
+  font-weight: bold; /* Bold text */
+  min-width: 25px; /* Ensures a good circular shape even for single digits */
+  text-align: center; /* Center text within the badge */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Shadow for the badge */
+}
