@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import http from 'http'; // Import http module
 import { Server } from 'socket.io'; // Import Server from socket.io
+import cors from 'cors'; // <--- NEW: Import CORS middleware
 
 dotenv.config();
 import connectDB from './config/db.js';
@@ -25,10 +26,18 @@ const server = http.createServer(app); // Create an HTTP server from your Expres
 // Initialize Socket.IO server
 const io = new Server(server, {
     cors: {
-        origin: process.env.FRONTEND_URL, // Allow your frontend to connect (e.g., http://localhost:5173 or your ngrok URL)
+        // Use CORS_ORIGIN for Socket.IO as well for consistency
+        origin: process.env.CORS_ORIGIN, // THIS IS THE CHANGE
         methods: ["GET", "POST"]
     }
 });
+
+// <--- NEW: CORS middleware for Express routes (before body parsers) --->
+// This must be placed before your routes and body parsers for proper functioning.
+app.use(cors({
+    origin: process.env.CORS_ORIGIN, // Allow your frontend to connect
+    credentials: true, // Allow cookies to be sent
+}));
 
 // Body parser middleware
 app.use(express.json()); // Essential for parsing JSON bodies, including webhooks

@@ -1,13 +1,12 @@
 // apps/backend/controllers/paystackController.js
 import asyncHandler from '../middleware/asyncHandler.js';
-import Paystack from 'paystack-api'; // Still needed for initialize, but not for verify in webhook
-import Order from '../models/Order.js'; // Ensure correct path/filename for your Order model (capital O as per the casing error fix)
+import Paystack from 'paystack-api';
+import Order from '../models/Order.js';
 import crypto from 'crypto';
-import axios from 'axios'; // Import axios for direct API call
-import { io } from '../server.js'; // Import the Socket.IO instance
+import axios from 'axios';
+import { io } from '../server.js'; // Ensure correct path if your server.js isn't directly above
 
 // Initialize Paystack with your secret key from environment variables
-// Ensure PAYSTACK_SECRET_KEY is set in your .env file (e.g., sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxx)
 const paystack = Paystack(process.env.PAYSTACK_SECRET_KEY);
 
 // @desc    Initialize a Paystack transaction
@@ -15,23 +14,21 @@ const paystack = Paystack(process.env.PAYSTACK_SECRET_KEY);
 // @access  Private
 const initializePaystackPayment = asyncHandler(async (req, res) => {
     const orderId = req.params.id;
-    const { amount, email } = req.body; // Getting amount (in kobo) and email from request body
+    const { amount, email } = req.body; // Amount should be in kobo/cents from frontend
 
-    // Input validation
     if (!orderId) {
         res.status(400);
         throw new Error('Order ID is required as a URL parameter.');
     }
-    if (!amount || amount <= 0) { // Amount must be positive and in kobo
+    if (typeof amount !== 'number' || amount <= 0) { // Ensure amount is a number and positive
         res.status(400);
-        throw new Error('Amount is required and must be a positive number.');
+        throw new Error('Amount is required and must be a positive number in Kobo/cents.');
     }
     if (!email) {
         res.status(400);
         throw new Error('Email is required.');
     }
 
-    // Find the order to ensure it exists and matches the amount
     const order = await Order.findById(orderId);
 
     if (!order) {
@@ -39,32 +36,40 @@ const initializePaystackPayment = asyncHandler(async (req, res) => {
         throw new Error('Order not found.');
     }
 
-    // Double-check if order total matches amount (Paystack expects Kobo/cents)
-    // This validates that the amount sent from the frontend matches the actual order total
-    // Consider rounding here too if you encounter issues with floating points on comparison
-    if (Math.round(order.totalPrice * 100) !== amount) {
+    // IMPORTANT: Verify that the amount passed from the frontend matches the actual order total
+    // It's safer to use the backend's calculated total price for the transaction amount.
+    const expectedAmountInKobo = Math.round(order.totalPrice * 100);
+
+    // If you send 'amount' from frontend, ensure it matches the actual order price.
+    // However, it's more secure to *always* use the `order.totalPrice` for the Paystack amount,
+    // and just use the `email` from the request body or `order.user.email`.
+    if (amount !== expectedAmountInKobo) {
         res.status(400);
-        throw new Error(`Amount mismatch. Expected ${Math.round(order.totalPrice * 100)} (Kobo), received ${amount} (Kobo).`);
+        throw new Error(`Amount mismatch. Expected ${expectedAmountInKobo} Kobo, received ${amount} Kobo.`);
     }
 
-    // Check if order is already paid
     if (order.isPaid) {
         res.status(400);
         throw new Error('Order has already been paid.');
     }
+    if (order.isCanceled) { // Also check for cancelled orders
+        res.status(400);
+        throw new Error('Cannot initialize payment for a cancelled order.');
+    }
+
 
     try {
         const response = await paystack.transaction.initialize({
-            amount: amount, // Passed directly in Kobo/cents
-            email: email,
-            // IMPORTANT: Ensure process.env.FRONTEND_URL is set in your backend's .env file
-            // For development with ngrok, this should be your frontend ngrok URL (e.g., https://your-frontend-url.ngrok-free.app)
-            callback_url: `${process.env.FRONTEND_URL}/order/${orderId}`,
+            amount: expectedAmountInKobo, // Use backend's authoritative amount
+            email: email, // Use email from req.body (could be more reliable than order.user.email if guest checkout is allowed)
+            reference: order._id.toString(), // Use order ID as the reference for easy lookup
+            // Use CORS_ORIGIN for frontend URL consistency
+            callback_url: `${process.env.CORS_ORIGIN}/order/${orderId}`, // <-- USING CORS_ORIGIN
             metadata: {
                 order_id: orderId, // Pass order_id in metadata for webhook verification
+                user_id: order.user.toString(), // Also pass user_id if helpful
             },
         });
-
 
         if (response.status) {
             res.status(200).json({
@@ -81,19 +86,12 @@ const initializePaystackPayment = asyncHandler(async (req, res) => {
         }
     } catch (error) {
         console.error('Paystack Initialization Exception (caught error):', error.message || error);
-        // --- DEBUG LOGS FOR DETAILED PAYSTACK ERROR ---
         if (error.response) {
             console.error('Raw Paystack API Error Details (from error.response):', error.response.data);
             console.error('Paystack API HTTP Status:', error.response.status);
         }
-        // --- END DEBUG LOGS ---
-
-        if (error.response) { // Error originating from Paystack API (e.g., 400, 401, 403)
-            res.status(error.response.status || 500);
-            throw new Error(error.response.data?.message || 'Error from Paystack API.');
-        }
-        res.status(500);
-        throw new Error('Paystack initialization failed due to server error. Please try again.');
+        res.status(error.response?.status || 500); // Use Paystack's status if available
+        throw new Error(error.response?.data?.message || 'Paystack initialization failed due to server error. Please try again.');
     }
 });
 
@@ -102,9 +100,14 @@ const initializePaystackPayment = asyncHandler(async (req, res) => {
 // @access  Public (Paystack calls this)
 const handlePaystackWebhook = asyncHandler(async (req, res) => {
     // It's crucial to verify the webhook signature for security
-    const secret = process.env.PAYSTACK_SECRET_KEY;
+    const secret = process.env.PAYSTACK_SECRET_KEY; // Using PAYSTACK_SECRET_KEY as webhook secret
+    // It's more secure to use a separate PAYSTACK_WEBHOOK_SECRET for webhook verification
+    // if Paystack supports it, to prevent using your main secret key for hashing.
+    // If you configured a separate webhook secret in Paystack dashboard, use that here.
+
+    // IMPORTANT: Use req.rawBody if you configured express.json to pass it
     const hash = crypto.createHmac('sha512', secret)
-        .update(JSON.stringify(req.body))
+        .update(req.rawBody || JSON.stringify(req.body)) // Fallback to JSON.stringify if rawBody is not set
         .digest('hex');
 
     if (hash !== req.headers['x-paystack-signature']) {
@@ -116,6 +119,8 @@ const handlePaystackWebhook = asyncHandler(async (req, res) => {
     const eventType = event.event;
     const data = event.data;
 
+    // Log the event type for debugging
+    console.log(`Paystack Webhook received event: ${eventType}`);
 
     if (eventType === 'charge.success' && data.status === 'success') {
         const reference = data.reference;
@@ -130,6 +135,7 @@ const handlePaystackWebhook = asyncHandler(async (req, res) => {
 
         if (order) {
             if (order.isPaid) {
+                console.log(`Order ${orderId} already paid.`);
                 return res.status(200).json({ message: 'Order already paid.' });
             }
 
@@ -145,29 +151,35 @@ const handlePaystackWebhook = asyncHandler(async (req, res) => {
                 );
 
                 if (verificationResponse.data.status && verificationResponse.data.data.status === 'success') {
+                    const verifiedData = verificationResponse.data.data;
+
                     // Additional check: Ensure amount matches (round both for robust comparison)
-                    // Paystack amount is in Kobo, convert order.totalPrice to Kobo
-                    if (Math.round(verificationResponse.data.data.amount) !== Math.round(order.totalPrice * 100)) {
-                        console.warn(`Paystack Webhook: Amount mismatch for order ${orderId}. Expected ${Math.round(order.totalPrice * 100)}, received ${Math.round(verificationResponse.data.data.amount)}`);
+                    const paidAmountInKobo = Math.round(verifiedData.amount);
+                    const orderTotalPriceInKobo = Math.round(order.totalPrice * 100);
+
+                    if (paidAmountInKobo !== orderTotalPriceInKobo) {
+                        console.warn(`Paystack Webhook: Amount mismatch for order ${orderId}. Expected ${orderTotalPriceInKobo}, received ${paidAmountInKobo}`);
+                        // You might still update the order but mark it for review, or reject the webhook
                         return res.status(400).send('Amount mismatch after verification.');
                     }
 
                     order.isPaid = true;
-                    order.paidAt = new Date(verificationResponse.data.data.paid_at || Date.now());
+                    order.paidAt = new Date(verifiedData.paid_at || Date.now());
                     order.paymentResult = {
-                        id: verificationResponse.data.data.id,
-                        status: verificationResponse.data.data.status,
-                        update_time: verificationResponse.data.data.paid_at,
-                        email_address: verificationResponse.data.data.customer.email,
-                        channel: verificationResponse.data.data.channel,
-                        currency: verificationResponse.data.data.currency,
-                        amount: verificationResponse.data.data.amount / 100, // Convert Kobo back to original currency unit for storage
-                        reference: verificationResponse.data.data.reference,
+                        id: verifiedData.id,
+                        status: verifiedData.status,
+                        update_time: verifiedData.paid_at,
+                        email_address: verifiedData.customer.email,
+                        reference: verifiedData.reference, // Store Paystack reference
+                        channel: verifiedData.channel,
+                        currency: verifiedData.currency,
+                        amount: verifiedData.amount / 100, // Convert Kobo back to original currency unit for storage
                     };
 
                     const updatedOrder = await order.save();
+                    console.log(`Order ${orderId} marked as paid successfully.`);
+
                     // --- Socket.IO: Emit payment success event ---
-                    // Send to clients subscribed to this specific order ID room
                     io.to(orderId.toString()).emit('paymentSuccess', {
                         orderId: orderId.toString(),
                         isPaid: true,
@@ -177,6 +189,7 @@ const handlePaystackWebhook = asyncHandler(async (req, res) => {
                     // --- END Socket.IO ---
 
                     res.status(200).json({ message: 'Payment confirmed and order updated.', order: updatedOrder });
+
                 } else {
                     console.error(`Paystack Webhook: Verification failed for reference ${reference}. Response:`, verificationResponse.data);
                     res.status(400).send(`Payment verification failed for reference ${reference}`);
@@ -195,8 +208,11 @@ const handlePaystackWebhook = asyncHandler(async (req, res) => {
         }
     } else if (eventType === 'charge.failed') {
         console.warn(`Paystack Webhook: Payment failed for reference ${data.reference}. Reason: ${data.gateway_response}`);
-        res.status(200).json({ message: 'Payment failed, but received webhook.' });
+        // You might want to update the order status to 'payment failed' or notify the user
+        // You could also emit a Socket.IO event for failed payments
+        res.status(200).json({ message: 'Payment failed, but webhook received.' });
     } else {
+        console.log(`Paystack Webhook: Received event type: ${eventType}, not specifically handled.`);
         res.status(200).json({ message: `Webhook received for unhandled event type: ${eventType}` });
     }
 });
