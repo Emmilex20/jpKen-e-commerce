@@ -3642,3 +3642,11 @@ main { /* Assuming your <main> tag wraps the content like in App.jsx */
   }
 }
 
+#username.dropdown-toggle::after {
+    display: none; /* This will hide the arrow for the user profile dropdown */
+}
+
+/* Optional: If you also want to remove the arrow for the "Admin" dropdown */
+#adminmenu.dropdown-toggle::after {
+    display: none;
+}

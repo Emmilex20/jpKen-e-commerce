@@ -8,9 +8,9 @@ import { toast } from 'react-toastify';
 
 import SearchBox from './SearchBox';
 
-import { useLogoutMutation } from '../slices/authApiSlice'; // Assuming this is correct API slice
-import { logout } from '../slices/authSlice'; // Import the logout action from authSlice
-import { clearCartItems } from '../slices/cartSlice'; // Assuming you have a resetCart action in cartSlice
+import { useLogoutMutation } from '../slices/authApiSlice';
+import { logout } from '../slices/authSlice';
+import { clearCartItems } from '../slices/cartSlice';
 
 const Header = () => {
   const { cartItems } = useSelector((state) => state.cart);
@@ -86,7 +86,17 @@ const Header = () => {
               </Nav.Link>
 
               {userInfo ? (
-                <NavDropdown title={userInfo.name} id='username' className="nav-item-link" onSelect={handleNavLinkClick}>
+                <NavDropdown
+                  title={
+                    <span className="d-flex align-items-center">
+                      <FaUser className="me-1 nav-icon" /> {userInfo.name}
+                    </span>
+                  }
+                  id='username'
+                  className="nav-item-link"
+                  onSelect={handleNavLinkClick}
+                  caret={false} 
+                >
                   <NavDropdown.Item as={Link} to='/profile' onClick={handleNavLinkClick}>Profile</NavDropdown.Item>
                   <NavDropdown.Item onClick={logoutHandler}>
                     Logout
