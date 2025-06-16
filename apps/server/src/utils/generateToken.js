@@ -6,10 +6,18 @@ const generateToken = (res, userId) => {
     expiresIn: '30d',
   });
 
+  // Determine if it's production environment
+  const isProduction = process.env.NODE_ENV === 'production';
+
   res.cookie('jwt', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV !== 'development', // Use secure cookies in production
-    sameSite: 'strict', // Prevent CSRF attacks
+    // Set 'secure' to true in production (requires HTTPS)
+    // and false in development (for http://localhost)
+    secure: isProduction,
+    // For cross-site requests (frontend on Vercel, backend on Render),
+    // sameSite MUST be 'None' in production.
+    // In development, 'Strict' is fine as both are usually localhost.
+    sameSite: isProduction ? 'None' : 'strict',
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 };
