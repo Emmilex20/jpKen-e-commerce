@@ -10,7 +10,7 @@ import SearchBox from './SearchBox';
 
 import { useLogoutMutation } from '../slices/authApiSlice'; // Assuming this is correct API slice
 import { logout } from '../slices/authSlice'; // Import the logout action from authSlice
-import { resetCart } from '../slices/cartSlice'; // Assuming you have a resetCart action in cartSlice
+import { clearCartItems } from '../slices/cartSlice'; // Assuming you have a resetCart action in cartSlice
 
 const Header = () => {
   const { cartItems } = useSelector((state) => state.cart);
@@ -28,7 +28,7 @@ const Header = () => {
     try {
       await logoutApiCall().unwrap();
       dispatch(logout()); // Dispatch the logout action from authSlice (clears localStorage)
-      dispatch(resetCart()); // Reset cart state (if you have this action)
+      dispatch(clearCartItems()); // Reset cart state (if you have this action)
       navigate('/login');
       toast.success('Logged out successfully!');
       setExpanded(false); // Close the menu after logout
