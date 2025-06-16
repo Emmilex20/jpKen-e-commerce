@@ -20,6 +20,10 @@ const ShippingPage = () => {
 
   useEffect(() => {
     if (shippingAddress) {
+      // ⭐ Add these new fields for pre-filling ⭐
+      setValue('fullName', shippingAddress.fullName || '');
+      setValue('phoneNumber', shippingAddress.phoneNumber || '');
+      // Existing fields
       setValue('address', shippingAddress.address || '');
       setValue('city', shippingAddress.city || '');
       setValue('postalCode', shippingAddress.postalCode || '');
@@ -28,6 +32,7 @@ const ShippingPage = () => {
   }, [shippingAddress, setValue]);
 
   const submitHandler = (data) => {
+    // data will automatically include fullName and phoneNumber now
     dispatch(saveShippingAddress(data));
     navigate('/payment');
   };
@@ -35,22 +40,55 @@ const ShippingPage = () => {
   return (
     <FormContainer>
       <Helmet><title>ProShop - Shipping</title></Helmet>
-      
-      <CheckoutSteps step1 step2 /> {/* Keep this as is */}
 
-      <h1 className="form-heading">Shipping</h1> {/* Reusing form-heading class */}
-      <Form onSubmit={handleSubmit(submitHandler)} className="auth-form"> {/* Reusing auth-form class */}
-        <Form.Group className='mb-4' controlId='address'> {/* Adjusted margin-bottom for consistency */}
-          <Form.Label className="form-label-custom">Address</Form.Label> {/* Reusing form-label-custom */}
+      <CheckoutSteps step1 step2 />
+
+      <h1 className="form-heading">Shipping</h1>
+      <Form onSubmit={handleSubmit(submitHandler)} className="auth-form">
+
+        {/* ⭐ NEW: Full Name Field ⭐ */}
+        <Form.Group className='mb-4' controlId='fullName'>
+          <Form.Label className="form-label-custom">Full Name</Form.Label>
+          <Form.Control
+            type='text'
+            placeholder='Enter full name'
+            className={`form-input-custom ${errors.fullName ? 'is-invalid' : ''}`}
+            {...register('fullName', { required: 'Full Name is required' })}
+          ></Form.Control>
+          {errors.fullName && <Form.Text className="text-danger error-message">{errors.fullName.message}</Form.Text>}
+        </Form.Group>
+
+        {/* ⭐ NEW: Phone Number Field ⭐ */}
+        <Form.Group className='mb-4' controlId='phoneNumber'>
+          <Form.Label className="form-label-custom">Phone Number</Form.Label>
+          <Form.Control
+            type='text' // Use type 'tel' for better mobile keyboard, but 'text' is fine for general
+            placeholder='Enter phone number'
+            className={`form-input-custom ${errors.phoneNumber ? 'is-invalid' : ''}`}
+            {...register('phoneNumber', {
+              required: 'Phone Number is required',
+              pattern: {
+                value: /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, // Basic phone number regex
+                message: 'Invalid phone number format'
+              }
+            })}
+          ></Form.Control>
+          {errors.phoneNumber && <Form.Text className="text-danger error-message">{errors.phoneNumber.message}</Form.Text>}
+        </Form.Group>
+
+        {/* Existing Address Field */}
+        <Form.Group className='mb-4' controlId='address'>
+          <Form.Label className="form-label-custom">Address</Form.Label>
           <Form.Control
             type='text'
             placeholder='Enter address'
-            className={`form-input-custom ${errors.address ? 'is-invalid' : ''}`} 
+            className={`form-input-custom ${errors.address ? 'is-invalid' : ''}`}
             {...register('address', { required: 'Address is required' })}
           ></Form.Control>
-          {errors.address && <Form.Text className="text-danger error-message">{errors.address.message}</Form.Text>} {/* Reusing error-message */}
+          {errors.address && <Form.Text className="text-danger error-message">{errors.address.message}</Form.Text>}
         </Form.Group>
 
+        {/* Existing City Field */}
         <Form.Group className='mb-4' controlId='city'>
           <Form.Label className="form-label-custom">City</Form.Label>
           <Form.Control
@@ -62,6 +100,7 @@ const ShippingPage = () => {
           {errors.city && <Form.Text className="text-danger error-message">{errors.city.message}</Form.Text>}
         </Form.Group>
 
+        {/* Existing Postal Code Field */}
         <Form.Group className='mb-4' controlId='postalCode'>
           <Form.Label className="form-label-custom">Postal Code</Form.Label>
           <Form.Control
@@ -73,6 +112,7 @@ const ShippingPage = () => {
           {errors.postalCode && <Form.Text className="text-danger error-message">{errors.postalCode.message}</Form.Text>}
         </Form.Group>
 
+        {/* Existing Country Field */}
         <Form.Group className='mb-4' controlId='country'>
           <Form.Label className="form-label-custom">Country</Form.Label>
           <Form.Control
@@ -84,7 +124,7 @@ const ShippingPage = () => {
           {errors.country && <Form.Text className="text-danger error-message">{errors.country.message}</Form.Text>}
         </Form.Group>
 
-        <Button type='submit' variant='primary' className='form-submit-btn'> {/* Reusing form-submit-btn */}
+        <Button type='submit' variant='primary' className='form-submit-btn'>
           Continue
         </Button>
       </Form>

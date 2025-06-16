@@ -5,7 +5,12 @@ import { updateCart } from '../utils/cartUtils'; // We will create this utility 
 // Initialize cart state from localStorage if available, otherwise an empty object
 const initialState = localStorage.getItem('cart')
   ? JSON.parse(localStorage.getItem('cart'))
-  : { cartItems: [], shippingAddress: {}, paymentMethod: 'PayPal' }; // Add initial state for checkout
+  : {
+      cartItems: [],
+      // ⭐ UPDATED: Added fullName and phoneNumber to shippingAddress initial state ⭐
+      shippingAddress: { fullName: '', phoneNumber: '', address: '', city: '', postalCode: '', country: '' },
+      paymentMethod: 'PayPal',
+    };
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -38,6 +43,7 @@ const cartSlice = createSlice({
     },
     // Reducer to save shipping address
     saveShippingAddress: (state, action) => {
+      // This line will now correctly store fullName and phoneNumber as they are part of action.payload
       state.shippingAddress = action.payload;
       return updateCart(state);
     },

@@ -14,55 +14,70 @@ const paystack = Paystack(process.env.PAYSTACK_SECRET_KEY);
 // @access  Private
 const initializePaystackPayment = asyncHandler(async (req, res) => {
     const orderId = req.params.id;
-    const { amount, email } = req.body; // Amount should be in kobo/cents from frontend
+    // We expect email from req.user (authenticated user) or req.body if allowed
+    // For amount, we will use the backend's authoritative order.totalPrice
+    const { email: requestEmail } = req.body; // Email from frontend is optional, but useful as a fallback/check
 
     if (!orderId) {
         res.status(400);
         throw new Error('Order ID is required as a URL parameter.');
     }
-    if (typeof amount !== 'number' || amount <= 0) { // Ensure amount is a number and positive
-        res.status(400);
-        throw new Error('Amount is required and must be a positive number in Kobo/cents.');
-    }
-    if (!email) {
-        res.status(400);
-        throw new Error('Email is required.');
-    }
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate('user', 'email'); // Populate user email to ensure we have it
 
     if (!order) {
         res.status(404);
         throw new Error('Order not found.');
     }
 
-    // IMPORTANT: Verify that the amount passed from the frontend matches the actual order total
-    // It's safer to use the backend's calculated total price for the transaction amount.
-    const expectedAmountInKobo = Math.round(order.totalPrice * 100);
-
-    if (amount !== expectedAmountInKobo) {
-        res.status(400);
-        throw new Error(`Amount mismatch. Expected ${expectedAmountInKobo} Kobo, received ${amount} Kobo.`);
-    }
-
     if (order.isPaid) {
         res.status(400);
         throw new Error('Order has already been paid.');
     }
-    if (order.isCanceled) { // Also check for cancelled orders
+    if (order.isCanceled) {
         res.status(400);
         throw new Error('Cannot initialize payment for a cancelled order.');
     }
 
+    // Use the backend's calculated total price for the transaction amount.
+    const expectedAmountInKobo = Math.round(order.totalPrice * 100);
+
+    // Prefer user's email from authenticated session, fallback to request body if needed
+    const customerEmail = order.user.email || requestEmail;
+    if (!customerEmail) {
+        res.status(400);
+        throw new Error('Customer email is required for Paystack initialization.');
+    }
+
+    // ⭐ EXTRACTING NEW FIELDS FOR PAYSTACK ⭐
+    const customerFullName = order.shippingAddress.fullName;
+    const customerPhoneNumber = order.shippingAddress.phoneNumber;
+
+    // Split full name into first and last for Paystack's fields (optional, but good practice)
+    let firstName = '';
+    let lastName = '';
+    if (customerFullName) {
+        const nameParts = customerFullName.split(' ');
+        firstName = nameParts[0] || '';
+        lastName = nameParts.slice(1).join(' ') || '';
+    }
+
     try {
         const response = await paystack.transaction.initialize({
-            amount: expectedAmountInKobo, // Use backend's authoritative amount
-            email: email, // Use email from req.body
+            amount: expectedAmountInKobo,
+            email: customerEmail,
             reference: order._id.toString(), // Use order ID as the reference for easy lookup
-            callback_url: `${process.env.CORS_ORIGIN}/order/${orderId}`, // USING CORS_ORIGIN
+            callback_url: `${process.env.CORS_ORIGIN}/order/${orderId}`,
+            // ⭐ ADDING NEW FIELDS TO PAYSTACK INITIALIZATION ⭐
+            first_name: firstName,
+            last_name: lastName,
+            phone: customerPhoneNumber,
             metadata: {
-                order_id: orderId,
-                user_id: order.user.toString(),
+                order_id: orderId.toString(),
+                user_id: order.user._id.toString(),
+                customer_name: customerFullName,      // Also add to metadata for redundancy/flexibility
+                customer_phone: customerPhoneNumber,  // Also add to metadata
+                // You can add other useful order details here too, e.g., line items
             },
         });
 
@@ -173,6 +188,9 @@ const handlePaystackWebhook = asyncHandler(async (req, res) => {
                         channel: verifiedData.channel,
                         currency: verifiedData.currency,
                         amount: verifiedData.amount / 100,
+                        // ⭐ Optionally add fullName and phoneNumber to paymentResult here if you want it logged there too ⭐
+                        // customer_name: verifiedData.customer.first_name + ' ' + verifiedData.customer.last_name,
+                        // customer_phone: verifiedData.customer.phone,
                     };
 
                     const updatedOrder = await order.save();

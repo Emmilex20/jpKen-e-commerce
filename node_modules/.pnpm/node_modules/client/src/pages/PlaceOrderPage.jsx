@@ -50,16 +50,23 @@ const PlaceOrderPage = () => {
   };
 
   return (
-    <div className="place-order-page-wrapper"> {/* Add a wrapper for page-level styling/animation */}
+    <div className="place-order-page-wrapper">
       <Helmet><title>ProShop - Place Order</title></Helmet>
       <CheckoutSteps step1 step2 step3 step4 />
-      <Row className="gx-4"> {/* Added gap utility for consistent spacing */}
+      <Row className="gx-4">
         <Col md={8}>
-          <h1 className="order-summary-heading">Order Summary</h1> {/* Custom heading */}
-          <ListGroup variant='flush' className="order-details-list"> {/* Custom class */}
-            <ListGroup.Item className="order-details-item card-like-item"> {/* Custom classes for styling */}
+          <h1 className="order-summary-heading">Order Summary</h1>
+          <ListGroup variant='flush' className="order-details-list">
+            <ListGroup.Item className="order-details-item card-like-item">
               <h2 className="section-title">Shipping</h2>
               <p className="section-content">
+                {/* ⭐ ADDED: Full Name and Phone Number ⭐ */}
+                <strong className="text-primary">Name: </strong>
+                {cart.shippingAddress.fullName}
+                <br />
+                <strong className="text-primary">Phone: </strong>
+                {cart.shippingAddress.phoneNumber}
+                <br />
                 <strong className="text-primary">Address: </strong>
                 {cart.shippingAddress.address}, {cart.shippingAddress.city}{' '}
                 {cart.shippingAddress.postalCode},{' '}
@@ -82,9 +89,9 @@ const PlaceOrderPage = () => {
               ) : (
                 <ListGroup variant='flush'>
                   {cart.cartItems.map((item, index) => (
-                    <ListGroup.Item key={index} className="order-item-card d-flex align-items-center"> {/* Custom class, flex for alignment */}
-                      <Row className="g-3 w-100"> {/* Use g-3 for consistent gaps */}
-                        <Col xs={3} sm={2} md={2} lg={1}> {/* Adjust column sizes for image */}
+                    <ListGroup.Item key={index} className="order-item-card d-flex align-items-center">
+                      <Row className="g-3 w-100">
+                        <Col xs={3} sm={2} md={2} lg={1}>
                           <Image
                             src={item.image}
                             alt={item.name}
@@ -98,7 +105,7 @@ const PlaceOrderPage = () => {
                             {item.name}
                           </Link>
                         </Col>
-                        <Col xs={12} sm={5} md={5} lg={5} className="d-flex align-items-center justify-content-lg-end justify-content-sm-start mt-2 mt-sm-0"> {/* Adjusted alignment for price */}
+                        <Col xs={12} sm={5} md={5} lg={5} className="d-flex align-items-center justify-content-lg-end justify-content-sm-start mt-2 mt-sm-0">
                           <span className="order-item-price">
                             {item.qty} x {formatCurrency(item.price)} = {formatCurrency(item.qty * item.price)}
                           </span>
@@ -111,17 +118,17 @@ const PlaceOrderPage = () => {
             </ListGroup.Item>
           </ListGroup>
         </Col>
-        <Col md={4} className="order-summary-col"> {/* Custom class for the summary column */}
-          <Card className="order-summary-card"> {/* Custom class for summary card */}
+        <Col md={4} className="order-summary-col">
+          <Card className="order-summary-card">
             <ListGroup variant='flush'>
               <ListGroup.Item className="order-summary-heading-item">
-                <h2 className="summary-card-title">Order Totals</h2> {/* Custom title */}
+                <h2 className="summary-card-title">Order Totals</h2>
               </ListGroup.Item>
               <ListGroup.Item className="summary-detail-item">
                 <Row className="summary-row">
                   <Col>Items</Col>
                   <Col className="text-end">
-                    {formatCurrency(cart.itemsPrice)} {/* ⭐ Apply formatCurrency here ⭐ */}
+                    {formatCurrency(cart.itemsPrice)}
                   </Col>
                 </Row>
               </ListGroup.Item>
@@ -129,7 +136,7 @@ const PlaceOrderPage = () => {
                 <Row className="summary-row">
                   <Col>Shipping</Col>
                   <Col className="text-end">
-                    {formatCurrency(cart.shippingPrice)} {/* ⭐ Apply formatCurrency here ⭐ */}
+                    {formatCurrency(cart.shippingPrice)}
                   </Col>
                 </Row>
               </ListGroup.Item>
@@ -137,7 +144,7 @@ const PlaceOrderPage = () => {
                 <Row className="summary-row">
                   <Col>Tax</Col>
                   <Col className="text-end">
-                    {formatCurrency(cart.taxPrice)} {/* ⭐ Apply formatCurrency here ⭐ */}
+                    {formatCurrency(cart.taxPrice)}
                   </Col>
                 </Row>
               </ListGroup.Item>
@@ -145,7 +152,7 @@ const PlaceOrderPage = () => {
                 <Row className="summary-row font-weight-bold">
                   <Col>Total</Col>
                   <Col className="text-end total-price-value">
-                    {formatCurrency(cart.totalPrice)} {/* ⭐ Apply formatCurrency here ⭐ */}
+                    {formatCurrency(cart.totalPrice)}
                   </Col>
                 </Row>
               </ListGroup.Item>
