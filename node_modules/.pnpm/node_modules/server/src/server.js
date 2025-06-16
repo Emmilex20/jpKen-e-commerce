@@ -2,7 +2,7 @@
 import path from 'path';
 import express from 'express';
 import dotenv from 'dotenv';
-import cookieParser from 'cookie-parser';
+// import cookieParser from 'cookie-parser'; // <--- REMOVE THIS IMPORT
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -31,7 +31,6 @@ const io = new Server(server, {
 });
 
 // Custom middleware to capture the raw request body for webhooks and other POST requests
-// This must be defined and applied before other body parsers.
 const rawBodySaver = (req, res, buf, encoding) => {
   if (buf && buf.length) {
     req.rawBody = buf.toString(encoding || 'utf8');
@@ -42,25 +41,23 @@ const rawBodySaver = (req, res, buf, encoding) => {
 };
 
 
-// --- CRITICAL CHANGE FOR CORS ---
-// This middleware must be placed before your routes and body parsers for proper functioning.
-// Use an array for 'origin' if you need to support both Vercel and localhost during dev.
+// CORS middleware
 app.use(cors({
   origin: [
       process.env.CORS_ORIGIN, // Your deployed Vercel frontend URL
       'http://localhost:5173' // Your local development frontend URL (if needed)
   ],
-  credentials: true, // ALLOW COOKIES TO BE SENT CROSS-ORIGIN
+  // credentials: true, // <--- You can remove this if no other cross-origin cookies are used.
+                      //       Keeping it doesn't hurt if other features might need it.
 }));
-
-// Cookie parser middleware
-app.use(cookieParser());
 
 // Body parser middleware - IMPORTANT: Apply express.json with the verify function GLOBALLY
 // This ensures rawBody is available for all JSON requests, including webhooks.
 // This must come *before* any other route handlers that might consume the body.
-app.use(express.json({ verify: rawBodySaver })); // <--- CRITICAL CHANGE HERE
+app.use(express.json({ verify: rawBodySaver }));
 app.use(express.urlencoded({ extended: true }));
+
+// app.use(cookieParser()); // <--- REMOVE THIS LINE
 
 
 // Application routes

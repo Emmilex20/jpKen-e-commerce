@@ -1,27 +1,34 @@
-// apps/server/src/middleware/authMiddleware.js
+// apps/backend/middleware/authMiddleware.js
 import jwt from 'jsonwebtoken';
-import asyncHandler from 'express-async-handler'; // npm install express-async-handler
+import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
 
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
-  // READ JWT FROM THE 'jwt' COOKIE
-  token = req.cookies.jwt; // <--- THIS IS THE CORRECT WAY TO GET THE TOKEN FROM THE COOKIE
-
-  if (token) {
+  // Check if Authorization header exists and starts with 'Bearer'
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
     try {
+      // Extract token from 'Bearer <token>' string
+      token = req.headers.authorization.split(' ')[1];
+
+      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      req.user = await User.findById(decoded.id).select('-password');
+      // Attach user to the request object
+      req.user = await User.findById(decoded.id).select('-password'); // Use decoded.id as per your generateToken payload
+
       next();
     } catch (error) {
-      console.error(error);
+      console.error('Token verification failed:', error);
       res.status(401);
       throw new Error('Not authorized, token failed');
     }
   } else {
-    // If no token is found in the cookie
+    // If no token is found in the Authorization header
     res.status(401);
     throw new Error('Not authorized, no token');
   }
@@ -31,7 +38,7 @@ const admin = (req, res, next) => {
   if (req.user && req.user.isAdmin) {
     next();
   } else {
-    res.status(401);
+    res.status(403); // Forbidden
     throw new Error('Not authorized as an admin');
   }
 };

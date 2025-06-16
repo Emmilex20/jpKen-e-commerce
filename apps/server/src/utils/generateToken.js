@@ -1,18 +1,11 @@
 import jwt from 'jsonwebtoken';
 
-const generateToken = (res, userId) => {
+// This function now only generates and returns the token string
+const generateToken = (userId) => { // Removed `res` parameter
   const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
     expiresIn: '30d',
   });
-
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  res.cookie('jwt', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV !== 'development',
-    sameSite: 'None', // 'None' FOR CROSS-ORIGIN IN PRODUCTION
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-  });
+  return token; // Return the token string
 };
 
 export default generateToken;

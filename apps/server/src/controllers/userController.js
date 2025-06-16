@@ -1,8 +1,9 @@
-// apps/server/src/controllers/userController.js
+// apps/backend/src/controllers/userController.js
 import asyncHandler from 'express-async-handler';
-import generateToken from '../utils/generateToken.js';
+import generateToken from '../utils/generateToken.js'; // This now generates a token string
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
+import crypto from 'crypto'; // Import crypto for password reset token hashing
 
 // @desc    Auth user & get token
 // @route   POST /api/users/login
@@ -13,15 +14,14 @@ const authUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
-    // Generate token and set it as an HTTP-only cookie
-    generateToken(res, user._id); // This function will set the cookie
+    const token = generateToken(user._id); // Get the token string
 
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
-      // The token is now in an HTTP-only cookie, so no need to send it in the JSON response body
+      token: token, // <-- Send the token in the JSON response body
     });
   } else {
     res.status(401);
@@ -45,15 +45,14 @@ const registerUser = asyncHandler(async (req, res) => {
   const user = await User.create({ name, email, password });
 
   if (user) {
-    // Generate token and set it as an HTTP-only cookie
-    generateToken(res, user._id); // This function will set the cookie
+    const token = generateToken(user._id); // Get the token string
 
     res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
-      // The token is now in an HTTP-only cookie, so no need to send it in the JSON response body
+      token: token, // <-- Send the token in the JSON response body
     });
   } else {
     res.status(400);
@@ -63,12 +62,11 @@ const registerUser = asyncHandler(async (req, res) => {
 
 // @desc    Logout user / clear cookie
 // @route   POST /api/users/logout
-// @access  Public
+// @access  Public (or Private if you want to ensure authenticated logout)
 const logoutUser = asyncHandler(async (req, res) => {
-  res.cookie('jwt', '', { // Clear the 'jwt' cookie
-    httpOnly: true,
-    expires: new Date(0), // Set expiration to a past date
-  });
+  // Since we are no longer using HTTP-only cookies for JWT,
+  // the client is responsible for clearing the token from localStorage.
+  // This endpoint just acknowledges the logout.
   res.status(200).json({ message: 'Logged out successfully' });
 });
 
@@ -77,7 +75,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 // @route   GET /api/users/profile
 // @access  Private
 const getUserProfile = asyncHandler(async (req, res) => {
-  // req.user is populated from the protect middleware
+  // req.user is populated from the protect middleware (which now reads from Authorization header)
   const user = await User.findById(req.user._id);
 
   if (user) {
@@ -108,15 +106,12 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
     const updatedUser = await user.save();
 
-    // Re-generate token for updated profile if necessary (e.g., if token payload changes)
-    // generateToken(res, updatedUser._id); // Re-set the cookie if token payload needs update
-
     res.json({
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
       isAdmin: updatedUser.isAdmin,
-      // No token sent in JSON response body if using HTTP-only cookie
+      // No token sent here, as profile update doesn't generate a new one
     });
   } else {
     res.status(404);
@@ -175,25 +170,15 @@ const forgotPassword = asyncHandler(async (req, res) => {
   if (!user) {
     res.status(404);
     throw new Error('User not found. No account associated with that email.');
-    // IMPORTANT: For security, you might want a more generic message like
-    // 'If an account with that email exists, a password reset link has been sent.'
-    // This prevents revealing whether an email is registered or not.
   }
 
-  // Get reset token using the method from the User model
   const resetToken = user.getResetPasswordToken();
+  await user.save({ validateBeforeSave: false });
 
-  // Save the user with the new token and expiration
-  await user.save({ validateBeforeSave: false }); // Disable validation to skip password hashing on token update
-
-  // Create reset URL for the email
   // IMPORTANT: Replace 'http://localhost:3000' with your actual frontend domain in production!
-  const resetUrl = `${req.protocol}://${req.get('host')}/resetpassword/${resetToken}`;
-
-  // Consider replacing req.protocol and req.get('host') with your actual CLIENT_URL from .env
-  // For example:
-  // const resetUrl = `${process.env.CLIENT_URL}/resetpassword/${resetToken}`;
-  // You would need to add CLIENT_URL=http://localhost:3000 (or your domain) to your backend's .env file
+  // It's better to use an environment variable for CLIENT_URL here.
+  const clientUrl = process.env.CORS_ORIGIN || `http://localhost:5173`; // Use the same CORS_ORIGIN for frontend base URL
+  const resetUrl = `${clientUrl}/resetpassword/${resetToken}`;
 
   const message = `
     <h1>You have requested a password reset</h1>
@@ -212,11 +197,11 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     res.status(200).json({ success: true, message: 'Email sent' });
   } catch (error) {
-    user.passwordResetToken = undefined; // Clear token if email sending fails
+    user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
-    await user.save({ validateBeforeSave: false }); // Save user without token
+    await user.save({ validateBeforeSave: false });
 
-    console.error('Error sending password reset email:', error); // Log the actual error
+    console.error('Error sending password reset email:', error);
     res.status(500);
     throw new Error('Email could not be sent. Please try again later.');
   }
@@ -226,16 +211,14 @@ const forgotPassword = asyncHandler(async (req, res) => {
 // @route   PUT /api/users/resetpassword/:resettoken
 // @access  Public
 const resetPassword = asyncHandler(async (req, res) => {
-  // Get hashed token from URL parameter
   const resetPasswordToken = crypto
     .createHash('sha256')
     .update(req.params.resettoken)
     .digest('hex');
 
-  // Find user by hashed token and check for expiration
   const user = await User.findOne({
     passwordResetToken: resetPasswordToken,
-    passwordResetExpires: { $gt: Date.now() }, // Token must not be expired
+    passwordResetExpires: { $gt: Date.now() },
   });
 
   if (!user) {
@@ -243,21 +226,21 @@ const resetPassword = asyncHandler(async (req, res) => {
     throw new Error('Invalid or expired reset token.');
   }
 
-  // Set new password
   user.password = req.body.password;
-  user.passwordResetToken = undefined; // Clear the token fields
+  user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
 
-  await user.save(); // The pre-save middleware in User model will hash the new password
+  await user.save();
 
-  // Re-generate token and send new JWT to log user in immediately
-  generateToken(res, user._id); // This will set the http-only cookie
+  // Generate a new token and send it in the response to automatically log in the user
+  const token = generateToken(user._id); // Get the token string
 
   res.status(200).json({
     _id: user._id,
     name: user.name,
     email: user.email,
     isAdmin: user.isAdmin,
+    token: token, // <-- Send the token in the JSON response body
     message: 'Password reset successful. You are now logged in.',
   });
 });
@@ -271,7 +254,7 @@ const updateUser = asyncHandler(async (req, res) => {
   if (user) {
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
-    user.isAdmin = req.body.isAdmin === undefined ? user.isAdmin : Boolean(req.body.isAdmin); // Ensure boolean
+    user.isAdmin = req.body.isAdmin === undefined ? user.isAdmin : Boolean(req.body.isAdmin);
 
     const updatedUser = await user.save();
 
@@ -290,7 +273,7 @@ const updateUser = asyncHandler(async (req, res) => {
 export {
   authUser,
   registerUser,
-  logoutUser, // <--- Added logoutUser to the export list
+  logoutUser,
   getUserProfile,
   updateUserProfile,
   getUsers,
