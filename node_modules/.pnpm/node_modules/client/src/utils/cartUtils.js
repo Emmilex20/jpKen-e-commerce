@@ -11,7 +11,7 @@ export const updateCart = (state) => {
   );
 
   // Calculate shipping price (example: if order is over ₦10000, shipping is free, else ₦500)
-  state.shippingPrice = addDecimals(state.itemsPrice > 10000 ? 0 : 500);
+  state.shippingPrice = addDecimals(state.itemsPrice < 10000 ? 0 : 500);
 
   // Calculate tax price (example: 15% tax)
   state.taxPrice = addDecimals(Number((0.005 * state.itemsPrice).toFixed(2)));
