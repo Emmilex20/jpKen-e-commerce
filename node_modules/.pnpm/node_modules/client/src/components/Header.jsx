@@ -4,8 +4,9 @@ import { Navbar, Nav, Container, NavDropdown, Badge } from 'react-bootstrap';
 import {
   FaShoppingCart,
   FaUser,
-  FaBox,
-  FaUserShield, // ⭐ NEW: Import FaUserShield for Admin icon ⭐
+  FaUtensils, // ⭐ Changed from FaBox to FaUtensils ⭐
+  FaUserShield,
+  FaInfoCircle, // ⭐ NEW: Import FaInfoCircle for About Us icon ⭐
 } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -32,11 +33,11 @@ const Header = () => {
   const logoutHandler = async () => {
     try {
       await logoutApiCall().unwrap();
-      dispatch(logout()); // Dispatch the logout action from authSlice (clears localStorage)
-      dispatch(clearCartItems()); // Reset cart state (if you have this action)
+      dispatch(logout());
+      dispatch(clearCartItems());
       navigate('/login');
       toast.success('Logged out successfully!');
-      setExpanded(false); // Close the menu after logout
+      setExpanded(false);
     } catch (err) {
       console.error(err);
       toast.error(err?.data?.message || err.error);
@@ -82,13 +83,14 @@ const Header = () => {
             </Nav>
 
             <Nav className="ms-auto main-nav-links">
+              {/* ⭐ UPDATED: Shop All to Our Menu with FaUtensils ⭐ */}
               <Nav.Link
                 as={Link}
-                to="/products"
+                to="/products" // Assuming '/products' still lists your menu items
                 className="d-flex align-items-center nav-item-link"
                 onClick={handleNavLinkClick}
               >
-                <FaBox className="me-1 nav-icon" /> Shop All
+                <FaUtensils className="me-1 nav-icon" /> Our Menu
               </Nav.Link>
 
               <Nav.Link
@@ -105,6 +107,16 @@ const Header = () => {
                 )}
               </Nav.Link>
 
+              {/* ⭐ NEW: About Us Link ⭐ */}
+              <Nav.Link
+                as={Link}
+                to="/about-us"
+                className="d-flex align-items-center nav-item-link"
+                onClick={handleNavLinkClick}
+              >
+                <FaInfoCircle className="me-1 nav-icon" /> About Us
+              </Nav.Link>
+
               {userInfo ? (
                 <NavDropdown
                   title={
@@ -115,7 +127,6 @@ const Header = () => {
                   id="username"
                   className="nav-item-link"
                   onSelect={handleNavLinkClick}
-                  caret={false}
                 >
                   <NavDropdown.Item as={Link} to="/profile" onClick={handleNavLinkClick}>
                     Profile
@@ -144,7 +155,6 @@ const Header = () => {
                   id="adminmenu"
                   className="nav-item-link"
                   onSelect={handleNavLinkClick}
-                  caret={false}
                 >
                   <NavDropdown.Item as={Link} to="/admin/userlist" onClick={handleNavLinkClick}>
                     Users

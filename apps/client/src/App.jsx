@@ -15,6 +15,11 @@ import OrderPage from './pages/OrderPage';
 // NEW PAGE IMPORTS FOR PASSWORD RESET
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import AboutPage from './pages/AboutPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import ShippingReturnsPage from './pages/ShippingReturnsPage';
+import FAQsPage from './pages/FAQsPage';
+import ContactUsPage from './pages/ContactUsPage';
 
 // Admin Page Imports (Ensure these files exist in src/pages/ or adjust paths)
 import UserListPage from './pages/UserListPage';
@@ -56,6 +61,12 @@ function App() {
           {/* NEW PUBLIC ROUTES FOR PASSWORD RESET */}
           <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
           <Route path="/resetpassword/:token" element={<ResetPasswordPage />} />
+          <Route path='/about-us' element={<AboutPage />} />
+          <Route path='/privacy-policy' element={<PrivacyPolicyPage />} />
+          <Route path='/shipping-returns' element={<ShippingReturnsPage />} />
+          <Route path='/faqs' element={<FAQsPage />} />
+          <Route path='/contact-us' element={<ContactUsPage />} />
+          
 
           {/* Protected User Routes */}
           <Route path="" element={<PrivateRoutes />}>
