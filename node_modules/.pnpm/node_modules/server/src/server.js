@@ -35,7 +35,10 @@ const io = new Server(server, {
 // <--- NEW: CORS middleware for Express routes (before body parsers) --->
 // This must be placed before your routes and body parsers for proper functioning.
 app.use(cors({
-    origin: process.env.CORS_ORIGIN, // Allow your frontend to connect
+    origin: [
+        'https://jp-ken-e-commerce-client.vercel.app', // For your deployed frontend
+        'http://localhost:5173' // For local development (if you still use it)
+    ],
     credentials: true, // Allow cookies to be sent
 }));
 
